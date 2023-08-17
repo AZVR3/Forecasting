@@ -1,4 +1,4 @@
-﻿Date_reported,Country_code,Country,WHO_region,New_cases,Cumulative_cases,New_deaths,Cumulative_deaths
+﻿date,Country_code,Country,WHO_region,New_cases,Cumulative_cases,New_deaths,Cumulative_deaths
 1/3/2020,KR,Republic of Korea,WPRO,0,0,0,0
 1/4/2020,KR,Republic of Korea,WPRO,0,0,0,0
 1/5/2020,KR,Republic of Korea,WPRO,0,0,0,0
