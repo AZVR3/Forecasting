@@ -13,25 +13,25 @@ print(df.head())
 
 # Determine the size of the training set
 dataSize = len(df)
-train_size = int(0.8 * dataSize)
+train_size = int(0.7 * dataSize)
 
 # Split the data into training and testing sets
 y_train = df['New_cases'][:train_size]
 y_test = df['New_cases'][train_size:]
 
 from pmdarima.utils import tsdisplay
-from pmdarima.preprocessing import BoxCoxEndogTransformer
+from pmdarima.preprocessing import LogEndogTransformer
 
-y_train_bc, _ = BoxCoxEndogTransformer(lmbda2=1e-6).fit_transform(y_train)
-tsdisplay(y_train_bc, lag_max=100)
+y_train_log, _ = LogEndogTransformer(lmbda=1e-6).fit_transform(y_train)
+tsdisplay(y_train_log, lag_max=100)
 
 from scipy.stats import normaltest
-print(normaltest(y_train_bc)[1])
+print(normaltest(y_train_log)[1])
 
 from pmdarima.pipeline import Pipeline
 
-fit2 = Pipeline([
-    ('boxcox', BoxCoxEndogTransformer(lmbda2=1e-6)),
+fit3 = Pipeline([
+    ('log', LogEndogTransformer(lmbda=1e-6)),
     ('arima', pm.AutoARIMA(trace=True,
                          suppress_warnings=True,
                          m=7, # set the seasonal period
@@ -40,8 +40,8 @@ fit2 = Pipeline([
                          ))
 ])
 
-fit2.fit(y_train)
-print(fit2.summary())
+fit3.fit(y_train)
+print(fit3.summary())
 
 from sklearn.metrics import mean_squared_error as mse
 
@@ -66,30 +66,28 @@ def plot_forecasts(forecasts, title, figsize=(8, 12)):
     plt.tight_layout()
     plt.show()
 
-# Generate forecasts # Added this line
-forecasts = fit2.predict(y_test.shape[0]) # Added this line
+# Generate forecasts
+forecasts_log = fit3.predict(y_test.shape[0])
 
-# Plot the forecasts # Added this line
-plot_forecasts(forecasts, title='Box-Cox transformed ARIMA') # Added this line
+# Plot the forecasts
+plot_forecasts(forecasts_log, title='Log transformed ARIMA')
 
 # Import the error functions
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import median_absolute_error as mdae
-
-def smape(A, F):
-    return 100/len(A) * np.sum(2 * np.abs(F - A)/(np.abs(A) + np.abs(F)))
+from pmdarima.metrics import smape
 
 # Calculate the errors
-mae_value = mae(y_test, forecasts)
-mdape_value = mdae(y_test, forecasts) / np.median(y_test)
-smape_value = smape(y_test, forecasts)
-mape_value = mape(y_test, forecasts)
-rmse_value = np.sqrt(mse(y_test, forecasts))
+mae_value_log = mae(y_test, forecasts_log)
+mdape_value_log = mdae(y_test, forecasts_log) / np.median(y_test)
+smape_value_log = smape(y_test, forecasts_log)
+mape_value_log = mape(y_test, forecasts_log)
+rmse_value_log = np.sqrt(mse(y_test, forecasts_log))
 
 # Print the errors
-print(f'MAE: {mae_value:.3f}')
-print(f'MdAPE: {mdape_value:.3f}')
-print(f'SMAPE: {smape_value:.3f}')
-print(f'MAPE: {mape_value:.3f}')
-print(f'RMSE: {rmse_value:.3f}')
+print(f'MAE: {mae_value_log:.3f}')
+print(f'MdAPE: {mdape_value_log:.3f}')
+print(f'SMAPE: {smape_value_log:.3f}')
+print(f'MAPE: {mape_value_log:.3f}')
+print(f'RMSE: {rmse_value_log:.3f}')
